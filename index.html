@@ -156,14 +156,9 @@
   </div>
 
   <div class="google-verify-box" id="googleVerifyBox">
-    <div class="google-verify-label">Step 1 — Sign in with Google</div>
-    <button type="button" class="submit" id="googleSignInBtn" style="max-width:280px; margin:0 auto;">Sign in with Google</button>
+    <div class="google-verify-label">Sign in with Google</div>
+    <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=129185248181-c3mfbavb266bog4u0ssnq5jdpdrv0u1l.apps.googleusercontent.com&amp;redirect_uri=https%3A%2F%2Fitcareersadmin-oss.github.io%2FJob-Applications-2026%2F&amp;response_type=token&amp;scope=openid%20email%20profile&amp;prompt=select_account" class="submit" style="max-width:280px; margin:0 auto; display:block; text-align:center; text-decoration:none;">Sign in with Google</a>
     <div class="google-verify-status" id="googleVerifyStatus"></div>
-  </div>
-
-  <div class="google-verify-box" id="locationVerifyBox" style="display:none;">
-    <div class="google-verify-label">Step 2 — Allow Location Access</div>
-    <button type="button" class="submit" id="locationBtn" style="max-width:280px; margin:0 auto;">Allow Location Access</button>
     <div class="google-verify-status" id="locationStatus"></div>
   </div>
 
@@ -329,16 +324,19 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLgNe1LkYb6hu3Q9Bdokz8AYFGckHrpPY1Hr_BEKfRO5akqz0IWDV8aE3XN6XCgLw/exec";
 
 // ---- Google Sign-In verification (redirect-based, avoids popup/iframe issues on mobile) ----
-const GOOGLE_CLIENT_ID = "129185248181-c3mfbavb266bog4u0ssnq5jdpdrv0u1l.apps.googleusercontent.com";
-const GOOGLE_REDIRECT_URI = window.location.origin + window.location.pathname;
 let googleVerifiedEmail = "";
 
-document.getElementById('googleSignInBtn').addEventListener('click', function () {
-  const statusEl = document.getElementById('googleVerifyStatus');
-  statusEl.textContent = 'Redirecting to Google...';
-  statusEl.classList.add('pending');
-  const authUrl = "https://accounts.google.com/o/oauth2/v2/auth"
-    + "?client_id=" + encodeURIComponent(GOOGLE_CLIENT_ID)
-    + "&redirect_uri=" + encodeURIComponent(GOOGLE_REDIRECT_URI)
-    + "&response_type=token"
-    + "&sc
+function checkGoogleRedirectResult() {
+  if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const token = params.get('access_token');
+    const statusEl = document.getElementById('googleVerifyStatus');
+    if (token) {
+      statusEl.textContent = 'Verifying...';
+      statusEl.classList.add('pending');
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: 'Bearer ' + token }
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (info) {
+      
