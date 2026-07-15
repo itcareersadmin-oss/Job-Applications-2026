@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Form — IT/NON IT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Work+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --ink:#14181F; --ink-soft:#1F2530; --paper:#FFFFFF;
+    --slate:#5B6472; --slate-light:#8A93A3;
+    --brass:#1656d6; --line:#DCE6F5;
+    --success:#2F6F4E; --error:#B33A3A; --bg:#EEF3FE;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:'Work Sans', sans-serif; background:var(--bg); color:var(--ink); padding:32px 16px; }
+  .wrap{ max-width:720px; margin:0 auto; }
+
+  .head{ text-align:center; margin-bottom:32px; }
+
+  .hero-banner{
+    background:linear-gradient(135deg, #1656d6, #1246b8);
+    border-radius:14px; padding:36px 28px; margin-bottom:20px;
+    box-shadow:0 20px 40px -20px rgba(22,86,214,0.5);
+  }
+  .hero-banner h1{
+    font-family:'Fraunces', serif; font-weight:600; color:#fff;
+    font-size:32px; line-height:1.15; margin-bottom:16px;
+  }
+  .hero-banner p{ color:#DCE6FB; font-size:15px; line-height:1.6; }
+
+  .instructions-card{
+    background:#F2F6FE; border-left:4px solid #1656d6; border-radius:8px;
+    padding:22px 22px; margin-bottom:20px;
+  }
+  .instructions-card h4{ font-family:'Fraunces', serif; font-weight:600; font-size:18px; margin-bottom:14px; color:var(--ink); }
+  .instructions-card ul{ list-style:none; padding:0; margin:0; }
+  .instructions-card li{ font-size:14px; color:var(--ink); line-height:1.6; margin-bottom:10px; padding-left:18px; position:relative; }
+  .instructions-card li::before{ content:"•"; color:#1656d6; position:absolute; left:0; font-weight:700; }
+  .instructions-card li:last-child{ margin-bottom:0; }
+  .google-verify-box{
+    max-width:720px; margin:0 auto 24px auto; background:var(--paper);
+    border:1.5px solid var(--brass); border-radius:6px; padding:20px;
+    text-align:center; box-shadow:0 10px 30px -20px rgba(0,0,0,0.3);
+  }
+  .google-verify-label{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--slate); margin-bottom:14px; }
+  #googleSignInDiv{ display:flex; justify-content:center; }
+  .google-verify-status{ margin-top:12px; font-size:13px; color:var(--success); font-family:'IBM Plex Mono', monospace; }
+  .google-verify-status.pending{ color:var(--slate-light); }
+  .head .eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--brass); margin-bottom:10px; }
+  .head h1{ font-family:'Fraunces', serif; font-weight:600; font-size:30px; color:var(--ink); }
+  .head p{ font-size:13px; color:var(--slate); margin-top:8px; }
+
+  .card{ background:var(--paper); border-radius:6px; box-shadow:0 24px 50px -30px rgba(0,0,0,0.35); overflow:hidden; }
+
+  .section{ padding:28px 28px; border-bottom:1px solid var(--line); }
+  .section:last-of-type{ border-bottom:none; }
+  .section-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:20px; }
+  .section-head .num{ font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--brass); border:1px solid var(--brass); border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .section-head h3{ font-family:'Fraunces', serif; font-weight:600; font-size:17px; }
+  .section-head .req-note{ margin-left:auto; font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--slate-light); text-transform:uppercase; letter-spacing:0.08em; }
+
+  .row{ margin-bottom:16px; }
+  .row.two{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .row.three{ display:grid; grid-template-columns:1.2fr 1.6fr 0.8fr 0.9fr; gap:10px; }
+  @media(max-width:640px){ .row.three{ grid-template-columns:1fr 1fr; } }
+
+  label{ display:block; font-size:12px; font-weight:500; color:var(--ink); margin-bottom:6px; }
+  label .star{ color:var(--error); }
+  .error-text{ font-size:11px; color:var(--error); margin-top:6px; }
+  input.invalid{ border-color:var(--error) !important; }
+  input, select, textarea{
+    width:100%; border:1px solid var(--line); border-radius:3px; padding:10px 11px;
+    font-family:'Work Sans', sans-serif; font-size:14px; color:var(--ink); background:#FAFCFF;
+  }
+  input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--brass); box-shadow:0 0 0 3px rgba(184,133,61,0.15); }
+  textarea{ resize:vertical; min-height:64px; }
+
+  .qual-block{ border:1px solid var(--line); border-radius:4px; padding:16px; margin-bottom:14px; background:#FAFCFF; }
+  .qual-block .qlabel{ font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--slate); margin-bottom:12px; }
+
+  .file-row{ border:1px dashed var(--line); border-radius:4px; padding:14px 16px; margin-bottom:12px; }
+  .file-row label{ margin-bottom:8px; }
+  .file-row .hint{ font-size:11px; color:var(--slate-light); margin-top:6px; }
+  .file-row input[type=file]{ font-size:13px; padding:8px; }
+  .file-row .fname{ font-size:11px; color:var(--success); margin-top:6px; font-family:'IBM Plex Mono', monospace; display:none; }
+
+  .others-file .others-select{ margin-bottom:10px; }
+  .declaration-row{ margin:18px 0; padding:14px 16px; background:#FAFCFF; border:1px solid var(--line); border-radius:4px; }
+  .declaration-label{ display:flex; align-items:flex-start; gap:10px; cursor:pointer; }
+  .declaration-label input[type=checkbox]{ width:auto; margin-top:3px; flex-shrink:0; }
+  .declaration-label span{ font-size:13px; color:var(--ink); line-height:1.5; }
+  .field-check{ display:none; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--success); margin-top:5px; }
+  .field-check.show{ display:block; }
+
+  .otp-row, .otp-input-row{ margin-top:8px; display:flex; gap:8px; }
+  .otp-input-row input{ flex:1; }
+  .otp-btn{
+    background:var(--brass); color:#fff; border:none; border-radius:3px; padding:9px 14px;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.05em; text-transform:uppercase;
+    cursor:pointer; white-space:nowrap;
+  }
+  .otp-btn:disabled{ opacity:0.55; }
+  .otp-status{ font-family:'IBM Plex Mono', monospace; font-size:11px; margin-top:6px; color:var(--slate-light); }
+  .otp-status.success{ color:var(--success); }
+  .otp-status.error{ color:var(--error); }
+  .addr-status{ font-family:'IBM Plex Mono', monospace; font-size:11px; margin-top:6px; color:var(--slate-light); }
+  .addr-status.success{ color:var(--success); }
+  .addr-status.warn{ color:#B8860B; }
+  .doc-status{ font-family:'IBM Plex Mono', monospace; font-size:11px; margin-top:6px; }
+  .doc-status.pending{ color:var(--slate-light); }
+  .doc-status.success{ color:var(--success); }
+  .doc-status.error{ color:var(--error); }
+
+  button.submit{
+    width:100%; background:var(--ink); color:#EDEAE2; border:none; padding:15px;
+    font-family:'IBM Plex Mono', monospace; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;
+    border-radius:4px; cursor:pointer; margin-top:6px;
+  }
+  button.submit:disabled{ opacity:0.6; }
+  .status-line{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--slate-light); margin-top:12px; text-align:center; }
+
+  #formSection.hidden{ display:none; }
+
+  /* confirmation stub */
+  .stub{ display:none; padding:40px 32px; text-align:left; }
+  .stub.show{ display:block; }
+  .stub .stamp{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--success); margin-bottom:10px; }
+  .stub h2{ font-family:'Fraunces', serif; font-weight:600; font-size:22px; margin-bottom:22px; }
+  .id-block{ border:1.5px dashed var(--brass); border-radius:4px; padding:18px 20px; background:#F5F9FF; }
+  .id-label{ font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--slate); margin-bottom:6px; }
+  .id-value{ font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:600; word-break:break-all; }
+  .stub .meta{ margin-top:20px; font-size:13px; color:var(--slate); line-height:1.7; }
+  .stub .note{ margin-top:20px; font-size:12px; color:var(--slate-light); border-top:1px solid var(--line); padding-top:14px; }
+  .copy-hint{ display:inline-block; margin-top:14px; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--brass); cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero-banner">
+    <h1>Application Form – IT / NON IT</h1>
+    <p>Complete all mandatory details. Candidate verification is mandatory before final submission.</p>
+  </div>
+
+  <div class="instructions-card">
+    <h4>Instructions</h4>
+    <ul>
+      <li>Use your own Google Account.</li>
+      <li>Complete Email &amp; Mobile OTP verification.</li>
+      <li>Allow GPS Location.</li>
+      <li>Upload original documents only.</li>
+      <li>Fake or edited documents will be rejected automatically.</li>
+      <li>A unique Response ID will be generated after successful verification.</li>
+    </ul>
+  </div>
+
+  <div class="google-verify-box" id="googleVerifyBox">
+    <div class="google-verify-label">Step 1 — Sign in with Google</div>
+    <div id="googleSignInDiv"></div>
+    <div class="google-verify-status" id="googleVerifyStatus"></div>
+  </div>
+
+  <div class="google-verify-box" id="locationVerifyBox" style="display:none;">
+    <div class="google-verify-label">Step 2 — Allow Location Access</div>
+    <button type="button" class="submit" id="locationBtn" style="max-width:280px; margin:0 auto;">Allow Location Access</button>
+    <div class="google-verify-status" id="locationStatus"></div>
+  </div>
+
+  <div class="card" id="mainCard" style="display:none;">
+    <div id="formSection">
+      <form id="appForm">
+
+        <div class="section">
+          <div class="section-head"><div class="num">01</div><h3>Personal Details</h3></div>
+          <div class="row"><label>Full Name <span class="star">*</span></label><input type="text" id="fullName" required></div>
+          <div class="row two">
+            <div><label>Mobile Number <span class="star">*</span></label><input type="tel" id="mobile" pattern="[0-9]{10}" maxlength="10" placeholder="Main working number" required>
+              <div class="otp-row" id="mobileOtpRow">
+                <button type="button" class="otp-btn" id="sendMobileOtpBtn">Send OTP</button>
+              </div>
+              <div class="otp-input-row" id="mobileOtpInputRow" style="display:none;">
+                <input type="text" id="mobileOtpCode" maxlength="6" placeholder="Enter 6-digit code">
+                <button type="button" class="otp-btn" id="verifyMobileOtpBtn">Verify</button>
+              </div>
+              <div class="otp-status" id="mobileOtpStatus"></div>
+            </div>
+            <div id="altMobileWrap"><label>Alternative Mobile Number <span class="star">*</span></label><input type="tel" id="altMobile" pattern="[0-9]{10}" maxlength="10" placeholder="Alternative working number" required>
+              <div class="error-text" id="altMobileError" style="display:none;">Alternative number cannot be the same as Mobile Number</div>
+            </div>
+          </div>
+          <div class="row">
+            <label>Email Address <span class="star">*</span></label><input type="email" id="email" required>
+            <div class="otp-row" id="emailOtpRow">
+              <button type="button" class="otp-btn" id="sendEmailOtpBtn">Send OTP</button>
+            </div>
+            <div class="otp-input-row" id="emailOtpInputRow" style="display:none;">
+              <input type="text" id="emailOtpCode" maxlength="6" placeholder="Enter 6-digit code">
+              <button type="button" class="otp-btn" id="verifyEmailOtpBtn">Verify</button>
+            </div>
+            <div class="otp-status" id="emailOtpStatus"></div>
+          </div>
+          <div class="row two">
+            <div><label>Gender <span class="star">*</span></label>
+              <select id="gender" required>
+                <option value="">Select</option>
+                <option>Male</option><option>Female</option><option>Other</option>
+              </select>
+            </div>
+            <div><label>Date of Birth <span class="star">*</span></label><input type="date" id="dob" required></div>
+          </div>
+          <div class="row"><label>Current Address <span class="star">*</span></label><textarea id="currentLoc" required placeholder="Enter full address"></textarea>
+            <div class="addr-status" id="currentLocStatus"></div>
+          </div>
+          <div class="row"><label>Permanent Address <span class="star">*</span></label><textarea id="permanentLoc" required placeholder="Enter full address"></textarea>
+            <div class="addr-status" id="permanentLocStatus"></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head"><div class="num">02</div><h3>Qualification Details</h3></div>
+          <div id="qualBlocks"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-head"><div class="num">03</div><h3>Skills &amp; Job Preference</h3></div>
+          <div class="row"><label>Skills <span class="star">*</span></label><textarea id="skills" required placeholder="e.g. Java, SQL, Communication"></textarea></div>
+          <div class="row two">
+            <div><label>Applying For <span class="star">*</span></label>
+              <select id="applyingFor" required>
+                <option value="">Select</option><option>IT</option><option>NON IT</option>
+              </select>
+            </div>
+            <div><label>Preferred Job Role <span class="star">*</span></label><input type="text" id="preferredRole" required></div>
+          </div>
+          <div class="row two">
+            <div><label>Total Experience (Years) <span class="star">*</span></label><input type="number" min="0" step="0.1" id="totalExp" required></div>
+            <div><label>Expected Salary <span class="star">*</span></label><input type="text" id="expSalary" required placeholder="e.g. 4.5 LPA"></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head"><div class="num">04</div><h3>Documents Upload</h3><div class="req-note">PDF / JPG / PNG</div></div>
+
+          <div class="file-row">
+            <label>10th Memo <span class="star">*</span></label>
+            <input type="file" id="tenthMemo" accept=".pdf,.jpg,.jpeg,.png" data-doclabel="10th class marks memo / certificate" required>
+            <div class="fname" id="fname-tenthMemo"></div>
+            <div class="doc-status" id="docstatus-tenthMemo"></div>
+          </div>
+          <div class="file-row">
+            <label>Inter Memo <span class="star">*</span></label>
+            <input type="file" id="interMemo" accept=".pdf,.jpg,.jpeg,.png" data-doclabel="Intermediate (12th/Inter) marks memo / certificate" required>
+            <div class="fname" id="fname-interMemo"></div>
+            <div class="doc-status" id="docstatus-interMemo"></div>
+          </div>
+          <div class="file-row">
+            <label>Degree Memo <span class="star">*</span></label>
+            <input type="file" id="degreeMemo" accept=".pdf,.jpg,.jpeg,.png" data-doclabel="Degree marks memo / certificate" required>
+            <div class="fname" id="fname-degreeMemo"></div>
+            <div class="doc-status" id="docstatus-degreeMemo"></div>
+          </div>
+          <div class="file-row others-file">
+            <label>Others <span class="star">*</span></label>
+            <select id="othersType" class="others-select" required>
+              <option value="">Select Qualification</option>
+              <option>MBA</option><option>B.Tech</option><option>M.Tech</option>
+            </select>
+            <input type="file" id="othersMemo" accept=".pdf,.jpg,.jpeg,.png" data-doclabel="additional qualification certificate (MBA/B.Tech/M.Tech)" required>
+            <div class="fname" id="fname-othersMemo"></div>
+            <div class="doc-status" id="docstatus-othersMemo"></div>
+          </div>
+          <div class="file-row">
+            <label>Resume <span class="star">*</span></label>
+            <input type="file" id="resume" accept=".pdf,.doc,.docx" data-doclabel="resume / CV" required>
+            <div class="fname" id="fname-resume"></div>
+            <div class="doc-status" id="docstatus-resume"></div>
+          </div>
+          <div class="file-row">
+            <label>Aadhaar — Front Side <span class="star">*</span></label>
+            <input type="file" id="aadhaarFront" accept=".pdf,.jpg,.jpeg,.png" data-doclabel="Aadhaar card front side" data-extract-address="true" required>
+            <div class="fname" id="fname-aadhaarFront"></div>
+            <div class="doc-status" id="docstatus-aadhaarFront"></div>
+          </div>
+          <div class="file-row">
+            <label>Aadhaar — Back Side <span class="star">*</span></label>
+            <input type="file" id="aadhaarBack" accept=".pdf,.jpg,.jpeg,.png" data-doclabel="Aadhaar card back side" required>
+            <div class="fname" id="fname-aadhaarBack"></div>
+            <div class="doc-status" id="docstatus-aadhaarBack"></div>
+          </div>
+          <div class="file-row">
+            <label>Photo — Passport Size <span class="star">*</span></label>
+            <input type="file" id="photo" accept=".jpg,.jpeg,.png" data-doclabel="passport size photo of the candidate's face" required>
+            <div class="fname" id="fname-photo"></div>
+            <div class="doc-status" id="docstatus-photo"></div>
+          </div>
+
+          <div class="declaration-row">
+            <label class="declaration-label">
+              <input type="checkbox" id="declaration" required>
+              <span>I hereby declare that all the information and documents provided above are true and correct to the best of my knowledge.</span>
+            </label>
+          </div>
+
+          <button type="submit" class="submit" id="submitBtn">Submit Application</button>
+          <div class="status-line" id="statusLine"></div>
+        </div>
+      </form>
+    </div>
+
+    <div class="stub" id="stub">
+      <div class="stamp">✓ Application Received</div>
+      <h2>Your Application is Registered</h2>
+      <div class="id-block">
+        <div class="id-label">Response ID</div>
+        <div class="id-value" id="responseId">—</div>
+      </div>
+      <div class="meta">
+        <strong id="stubName">—</strong> · <span id="stubRole">—</span><br>
+        Submitted: <span id="stubTime">—</span>
+      </div>
+      <div class="copy-hint" id="copyHint">⧉ Copy Response ID</div>
+      <div class="note">Save this ID — it will be used as a reference number for future follow-up.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLgNe1LkYb6hu3Q9Bdokz8AYFGckHrpPY1Hr_BEKfRO5akqz0IWDV8aE3XN6XCgLw/exec";
+
+// ---- Google Sign-In verification ----
+const GOOGLE_CLIENT_ID = "129185248181-c3mfbavb266bog4u0ssnq5jdpdrv0u1l.apps.googleusercontent.com";
+let googleVerifiedEmail = "";
+
+function parseJwt(token) {
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  return JSON.parse(jsonPayload);
+}
+
+function handleCredentialResponse(response) {
+  try {
+    const payload = parseJwt(response.credential);
+    googleVerifiedEmail = payload.email || "";
+    const statusEl = document.getElementById('googleVerifyStatus');
+    statusEl.textContent = '✓ Verified as ' + googleVerifiedEmail;
+    statusEl.classList.remove('pending');
+    document.getElementById('locationVerifyBox').style.display = 'block';
+    document.getElementById('locationVerifyBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (err) {
+    googleVerifiedEmail = "";
+  }
+}
+
+let candidateLat = null;
+let candidateLng = null;
+
+document.getElementById('locationBtn').addEventListener('click', function(){
+  const statusEl = document.getElementById('locationStatus');
+  statusEl.textContent = 'Requesting location access...';
+  statusEl.classList.add('pending');
+  if (!navigator.geolocation) {
+    statusEl.textContent = 'Location is not supported on this browser.';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      candidateLat = pos.coords.latitude;
+      candidateLng = pos.coords.longitude;
+      statusEl.textContent = '✓ Location access granted';
+      statusEl.classList.remove('pending');
+      document.getElementById('mainCard').style.display = 'block';
+      document.getElementById('mainCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    function(err){
+      statusEl.textContent = 'Location access denied. Please allow location to continue.';
+      statusEl.classList.remove('pending');
+    }
+  );
+});
+
+window.onload = function () {
+  if (window.google && google.accounts && google.accounts.id) {
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse
+    });
+    google.accounts.id.renderButton(
+      document.getElementById("googleSignInDiv"),
+      { theme: "outline", size: "large", text: "signin_with" }
+    );
+  }
+};
+
+
+// build 4 qualification blocks
+const qualBlocks = document.getElementById('qualBlocks');
+const qualLabels = ["Qualification 1","Qualification 2","Qualification 3","Qualification 4"];
+qualLabels.forEach((lbl, i) => {
+  const div = document.createElement('div');
+  div.className = 'qual-block';
+  div.innerHTML = `
+    <div class="qlabel">${lbl}</div>
+    <div class="row three">
+      <div>
+        <label>Level <span class="star">*</span></label>
+        <select class="qual-level" required>
+          <option value="">Select</option>
+          <option>10th</option><option>Inter</option><option>Degree</option><option>MBA</option><option>B.Tech</option>
+        </select>
+      </div>
+      <div><label>Institution / Board <span class="star">*</span></label><input type="text" class="qual-inst" required></div>
+      <div><label>Year <span class="star">*</span></label><input type="number" class="qual-year" min="1990" max="2030" required></div>
+      <div><label>%/CGPA <span class="star">*</span></label><input type="text" class="qual-perc" required></div>
+    </div>`;
+  qualBlocks.appendChild(div);
+});
+
+// show selected filenames
+const fileIds = ["tenthMemo","interMemo","degreeMemo","othersMemo","resume","aadhaarFront","aadhaarBack","photo"];
+let verifiedDocs = {};
+let aadhaarExtractedAddress = "";
+
+function fileToBase64Quick(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve({ name:file.name, mimeType:file.type, data: reader.result.split(',')[1] });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function verifyDocumentField(id, inputEl){
+  const statusEl = document.getElementById('docstatus-' + id);
+  const fnameEl = document.getElementById('fname-' + id);
+  const file = inputEl.files[0];
+  if (!file) return;
+
+  verifiedDocs[id] = false;
+  fnameEl.textContent = file.name;
+  fnameEl.style.display = 'block';
+  statusEl.className = 'doc-status pending';
+  statusEl.textContent = 'Verifying document...';
+
+  try {
+    const fileData = await fileToBase64Quick(file);
+    let docLabel = inputEl.getAttribute('data-doclabel') || 'document';
+    if (id === 'othersMemo') {
+      const otherSel = document.getElementById('othersType').value;
+      if (otherSel) docLabel = otherSel + ' qualification certificate';
+    }
+    const extractAddress = inputEl.getAttribute('data-extract-address') === 'true';
+
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verify_document', docLabel: docLabel, extractAddress: extractAddress, file: fileData })
+    });
+    const result = await resp.json();
+
+    if (result.result !== 'success') {
+      statusEl.className = 'doc-status error';
+      statusEl.textContent = '⚠ Could not verify — please try again.';
+      verifiedDocs[id] = false;
+      return;
+    }
+
+    if (result.valid) {
+      statusEl.className = 'doc-status success';
+      statusEl.textContent = result.skipped ? ('✓ Uploaded (' + result.reason + ')') : '✓ Successfully verified and uploaded';
+      verifiedDocs[id] = true;
+      if (extractAddress && result.extractedAddress) {
+        aadhaarExtractedAddress = result.extractedAddress;
+        checkAadhaarAddressMatch();
+      }
+    } else {
+      statusEl.className = 'doc-status error';
+      statusEl.textContent = '⚠ Please upload a valid document — ' + (result.reason || 'this does not look correct.');
+      verifiedDocs[id] = false;
+      inputEl.value = '';
+      fnameEl.style.display = 'none';
+    }
+  } catch (err) {
+    statusEl.className = 'doc-status error';
+    statusEl.textContent = '⚠ Verification failed — please try uploading again.';
+    verifiedDocs[id] = false;
+  }
+}
+
+fileIds.forEach(id=>{
+  const inputEl = document.getElementById(id);
+  verifiedDocs[id] = false;
+  inputEl.addEventListener('change', function(){
+    verifyDocumentField(id, inputEl);
+  });
+});
+
+// Generic "saved" indicator for required text/select/date/number/textarea fields
+function setupFieldChecks(){
+  const form = document.getElementById('appForm');
+  const fields = form.querySelectorAll('input[required], select[required], textarea[required]');
+  fields.forEach(field => {
+    if (field.type === 'file' || field.type === 'checkbox') return;
+    if (field.parentElement.querySelector('.field-check')) return; // avoid duplicates
+    const check = document.createElement('div');
+    check.className = 'field-check';
+    check.textContent = '✓ Saved';
+    field.insertAdjacentElement('afterend', check);
+    field.addEventListener('blur', function(){
+      if (field.checkValidity() && field.value.trim() !== '') {
+        check.classList.add('show');
+      } else {
+        check.classList.remove('show');
+      }
+    });
+  });
+}
+setupFieldChecks();
+
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    if(!file){ resolve(null); return; }
+    const reader = new FileReader();
+    reader.onload = () => resolve({ name:file.name, mimeType:file.type, data: reader.result.split(',')[1] });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ---- Mobile OTP ----
+let mobileOtpVerified = false;
+let mobileOtpVerifiedFor = "";
+
+document.getElementById('sendMobileOtpBtn').addEventListener('click', async function(){
+  const mobile = document.getElementById('mobile').value.trim();
+  const statusEl = document.getElementById('mobileOtpStatus');
+  if (!/^[0-9]{10}$/.test(mobile)) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Enter a valid 10-digit mobile number first.';
+    return;
+  }
+  this.disabled = true;
+  statusEl.className = 'otp-status';
+  statusEl.textContent = 'Sending OTP...';
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'send_mobile_otp', mobile: mobile })
+    });
+    const result = await resp.json();
+    if (result.result === 'success') {
+      statusEl.className = 'otp-status success';
+      statusEl.textContent = '✓ OTP sent to ' + mobile;
+      document.getElementById('mobileOtpInputRow').style.display = 'flex';
+    } else {
+      statusEl.className = 'otp-status error';
+      statusEl.textContent = result.message || 'Could not send OTP.';
+    }
+  } catch (err) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Network error — please try again.';
+  }
+  this.disabled = false;
+});
+
+document.getElementById('verifyMobileOtpBtn').addEventListener('click', async function(){
+  const mobile = document.getElementById('mobile').value.trim();
+  const code = document.getElementById('mobileOtpCode').value.trim();
+  const statusEl = document.getElementById('mobileOtpStatus');
+  if (!code) return;
+  this.disabled = true;
+  statusEl.textContent = 'Verifying...';
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verify_mobile_otp', mobile: mobile, code: code })
+    });
+    const result = await resp.json();
+    if (result.result === 'success' && result.verified) {
+      statusEl.className = 'otp-status success';
+      statusEl.textContent = '✓ Mobile number verified';
+      mobileOtpVerified = true;
+      mobileOtpVerifiedFor = mobile;
+      document.getElementById('mobileOtpInputRow').style.display = 'none';
+      document.getElementById('mobileOtpRow').style.display = 'none';
+      document.getElementById('mobile').setAttribute('readonly', 'readonly');
+    } else {
+      statusEl.className = 'otp-status error';
+      statusEl.textContent = result.message || 'Incorrect code, please try again.';
+    }
+  } catch (err) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Network error — please try again.';
+  }
+  this.disabled = false;
+});
+
+document.getElementById('mobile').addEventListener('input', function(){
+  if (mobileOtpVerified && this.value.trim() !== mobileOtpVerifiedFor) {
+    mobileOtpVerified = false;
+    document.getElementById('mobile').removeAttribute('readonly');
+    document.getElementById('mobileOtpRow').style.display = 'flex';
+    document.getElementById('mobileOtpStatus').textContent = '';
+  }
+});
+
+// ---- Email OTP ----
+let emailOtpVerified = false;
+let emailOtpVerifiedFor = "";
+
+document.getElementById('sendEmailOtpBtn').addEventListener('click', async function(){
+  const email = document.getElementById('email').value.trim();
+  const statusEl = document.getElementById('emailOtpStatus');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Enter a valid email address first.';
+    return;
+  }
+  this.disabled = true;
+  statusEl.className = 'otp-status';
+  statusEl.textContent = 'Sending OTP...';
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'send_email_otp', email: email })
+    });
+    const result = await resp.json();
+    if (result.result === 'success') {
+      statusEl.className = 'otp-status success';
+      statusEl.textContent = '✓ OTP sent to ' + email;
+      document.getElementById('emailOtpInputRow').style.display = 'flex';
+    } else {
+      statusEl.className = 'otp-status error';
+      statusEl.textContent = result.message || 'Could not send OTP.';
+    }
+  } catch (err) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Network error — please try again.';
+  }
+  this.disabled = false;
+});
+
+document.getElementById('verifyEmailOtpBtn').addEventListener('click', async function(){
+  const email = document.getElementById('email').value.trim();
+  const code = document.getElementById('emailOtpCode').value.trim();
+  const statusEl = document.getElementById('emailOtpStatus');
+  if (!code) return;
+  this.disabled = true;
+  statusEl.textContent = 'Verifying...';
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verify_email_otp', email: email, code: code })
+    });
+    const result = await resp.json();
+    if (result.result === 'success' && result.verified) {
+      statusEl.className = 'otp-status success';
+      statusEl.textContent = '✓ Email verified';
+      emailOtpVerified = true;
+      emailOtpVerifiedFor = email;
+      document.getElementById('emailOtpInputRow').style.display = 'none';
+      document.getElementById('emailOtpRow').style.display = 'none';
+      document.getElementById('email').setAttribute('readonly', 'readonly');
+    } else {
+      statusEl.className = 'otp-status error';
+      statusEl.textContent = result.message || 'Incorrect code, please try again.';
+    }
+  } catch (err) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Network error — please try again.';
+  }
+  this.disabled = false;
+});
+
+document.getElementById('email').addEventListener('input', function(){
+  if (emailOtpVerified && this.value.trim() !== emailOtpVerifiedFor) {
+    emailOtpVerified = false;
+    document.getElementById('email').removeAttribute('readonly');
+    document.getElementById('emailOtpRow').style.display = 'flex';
+    document.getElementById('emailOtpStatus').textContent = '';
+  }
+});
+
+// ---- Address matching (best-effort, informational, does not block submission) ----
+let addressMatchStatus = "Not checked";
+let aadhaarAddressMatchStatus = "Not checked";
+
+function normalizeAddressText(str){
+  return (str || "").toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function tokensOverlap(a, b){
+  const tokensA = new Set(normalizeAddressText(a).split(' ').filter(t => t.length > 2));
+  const tokensB = new Set(normalizeAddressText(b).split(' ').filter(t => t.length > 2));
+  if (tokensA.size === 0 || tokensB.size === 0) return 0;
+  let common = 0;
+  tokensA.forEach(t => { if (tokensB.has(t)) common++; });
+  return common / Math.min(tokensA.size, tokensB.size);
+}
+
+async function checkGpsAddressMatch(){
+  const statusEl = document.getElementById('currentLocStatus');
+  const addr = document.getElementById('currentLoc').value.trim();
+  if (!addr || candidateLat === null) return;
+  statusEl.className = 'addr-status';
+  statusEl.textContent = 'Checking against your location...';
+  try {
+    const resp = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + candidateLat + '&lon=' + candidateLng + '&zoom=16&addressdetails=1');
+    const geo = await resp.json();
+    const geoAddrText = geo.display_name || '';
+    const overlap = tokensOverlap(addr, geoAddrText);
+    if (overlap >= 0.25) {
+      statusEl.className = 'addr-status success';
+      statusEl.textContent = '✓ Address appears to match your location';
+      addressMatchStatus = 'Matched';
+    } else {
+      statusEl.className = 'addr-status warn';
+      statusEl.textContent = '⚠ Could not confirm this matches your GPS location — please double check';
+      addressMatchStatus = 'Could not confirm';
+    }
+  } catch (err) {
+    addressMatchStatus = 'Check failed';
+  }
+}
+
+function checkAadhaarAddressMatch(){
+  const statusEl = document.getElementById('permanentLocStatus');
+  const permAddr = document.getElementById('permanentLoc').value.trim();
+  if (!permAddr || !aadhaarExtractedAddress) return;
+  const overlap = tokensOverlap(permAddr, aadhaarExtractedAddress);
+  if (overlap >= 0.3) {
+    statusEl.className = 'addr-status success';
+    statusEl.textContent = '✓ Matches address on Aadhaar';
+    aadhaarAddressMatchStatus = 'Matched';
+  } else {
+    statusEl.className = 'addr-status warn';
+    statusEl.textContent = '⚠ Could not confirm this matches your Aadhaar address — please double check';
+    aadhaarAddressMatchStatus = 'Could not confirm';
+  }
+}
+
+document.getElementById('currentLoc').addEventListener('blur', checkGpsAddressMatch);
+document.getElementById('permanentLoc').addEventListener('blur', checkAadhaarAddressMatch);
+
+document.getElementById('altMobile').addEventListener('input', function(){
+  const mobileVal = document.getElementById('mobile').value.trim();
+  const altVal = this.value.trim();
+  const err = document.getElementById('altMobileError');
+  if (mobileVal && altVal && mobileVal === altVal) {
+    err.style.display = 'block';
+    this.classList.add('invalid');
+  } else {
+    err.style.display = 'none';
+    this.classList.remove('invalid');
+  }
+});
+
+function generateResponseId(){
+  const now = new Date();
+  const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
+  const rand = Math.floor(1000 + Math.random()*9000);
+  return `APP-${y}${m}${d}-${rand}`;
+}
+
+document.getElementById('appForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const submitBtn = document.getElementById('submitBtn');
+  const statusLine = document.getElementById('statusLine');
+
+  // Check: Google account must be verified before submitting
+  if (!googleVerifiedEmail) {
+    const box = document.getElementById('googleVerifyBox');
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('googleVerifyStatus').textContent = 'Please sign in with Google before submitting.';
+    document.getElementById('googleVerifyStatus').classList.remove('pending');
+    document.getElementById('googleVerifyStatus').style.color = '#B33A3A';
+    return;
+  }
+
+  // Check: Mobile Number and Alternative Mobile Number must not be the same
+  const mobileVal = document.getElementById('mobile').value.trim();
+  const altMobileVal = document.getElementById('altMobile').value.trim();
+  const altMobileError = document.getElementById('altMobileError');
+  const altMobileInput = document.getElementById('altMobile');
+
+  if (mobileVal && altMobileVal && mobileVal === altMobileVal) {
+    altMobileError.style.display = 'block';
+    altMobileInput.classList.add('invalid');
+    altMobileInput.focus();
+    altMobileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  } else {
+    altMobileError.style.display = 'none';
+    altMobileInput.classList.remove('invalid');
+  }
+
+  // Check: Mobile OTP must be verified
+  if (!mobileOtpVerified) {
+    statusLine.textContent = 'Please verify your Mobile Number with OTP before submitting.';
+    document.getElementById('mobile').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  // Check: Email OTP must be verified
+  if (!emailOtpVerified) {
+    statusLine.textContent = 'Please verify your Email Address with OTP before submitting.';
+    document.getElementById('email').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  // Check: all documents must be verified
+  const unverifiedDoc = fileIds.find(id => !verifiedDocs[id]);
+  if (unverifiedDoc) {
+    statusLine.textContent = 'Please upload and verify all required documents before submitting.';
+    document.getElementById(unverifiedDoc).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting...';
+  statusLine.textContent = 'Uploading files, please wait...';
+
+  const responseId = generateResponseId();
+
+  const quals = Array.from(document.querySelectorAll('.qual-block')).map(block=>({
+    level: block.querySelector('.qual-level').value,
+    institution: block.querySelector('.qual-inst').value,
+    year: block.querySelector('.qual-year').value,
+    percentage: block.querySelector('.qual-perc').value
+  }));
+
+  try{
+    const [tenthMemo, interMemo, degreeMemo, othersMemo, resume, aadhaarFront, aadhaarBack, photo] = await Promise.all(
+      fileIds.map(id => fileToBase64(document.getElementById(id).files[0]))
+    );
+
+    const payload = {
+      id: responseId,
+      submittedAt: new Date().toISOString(),
+      fullName: document.getElementById('fullName').value.trim(),
+      mobile: document.getElementById('mobile').value.trim(),
+      altMobile: document.getElementById('altMobile').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      googleEmail: googleVerifiedEmail,
+      gender: document.getElementById('gender').value,
+      dob: document.getElementById('dob').value,
+      qualifications: quals,
+      skills: document.getElementById('skills').value.trim(),
+      applyingFor: document.getElementById('applyingFor').value,
+      preferredRole: document.getElementById('preferredRole').value.trim(),
+      totalExp: document.getElementById('totalExp').value,
+      expSalary: document.getElementById('expSalary').value.trim(),
+      currentLoc: document.getElementById('currentLoc').value.trim(),
+      permanentLoc: document.getElementById('permanentLoc').value.trim(),
+      othersType: document.getElementById('othersType').value,
+      mobileOtpVerified: mobileOtpVerified,
+      emailOtpVerified: emailOtpVerified,
+      addressMatchStatus: addressMatchStatus,
+      aadhaarAddressMatchStatus: aadhaarAddressMatchStatus,
+      files: { tenthMemo, interMemo, degreeMemo, othersMemo, resume, aadhaarFront, aadhaarBack, photo }
+    };
+
+    if(SCRIPT_URL && SCRIPT_URL.indexOf('http') === 0){
+      await fetch(SCRIPT_URL, {
+        method:'POST',
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    document.getElementById('responseId').textContent = responseId;
+    document.getElementById('stubName').textContent = payload.fullName;
+    document.getElementById('stubRole').textContent = payload.preferredRole + ' (' + payload.applyingFor + ')';
+    document.getElementById('stubTime').textContent = new Date().toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short' });
+
+    document.getElementById('formSection').classList.add('hidden');
+    document.getElementById('stub').classList.add('show');
+
+  }catch(err){
+    statusLine.textContent = 'Error: something went wrong while sending files, please try again.';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Application';
+  }
+});
+
+document.getElementById('copyHint').addEventListener('click', function(){
+  const id = document.getElementById('responseId').textContent;
+  navigator.clipboard.writeText(id).then(()=>{
+    this.textContent = '✓ Copied';
+    setTimeout(()=>{ this.textContent = '⧉ Copy Response ID'; }, 1500);
+  });
+});
+</script>
+</body>
+</html>
