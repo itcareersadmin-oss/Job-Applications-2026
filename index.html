@@ -113,7 +113,7 @@
   .doc-status.success{ color:var(--success); }
   .doc-status.error{ color:var(--error); }
 
-  button.submit{
+  button.submit, a.submit{
     width:100%; background:var(--ink); color:#EDEAE2; border:none; padding:15px;
     font-family:'IBM Plex Mono', monospace; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;
     border-radius:4px; cursor:pointer; margin-top:6px;
@@ -157,7 +157,7 @@
 
   <div class="google-verify-box" id="googleVerifyBox">
     <div class="google-verify-label">Sign in with Google</div>
-    <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=129185248181-c3mfbavb266bog4u0ssnq5jdpdrv0u1l.apps.googleusercontent.com&amp;redirect_uri=https%3A%2F%2Fitcareersadmin-oss.github.io%2FJob-Applications-2026%2F&amp;response_type=token&amp;scope=openid%20email%20profile&amp;prompt=select_account" class="submit" style="max-width:280px; margin:0 auto; display:block; text-align:center; text-decoration:none;">Sign in with Google</a>
+    <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=129185248181-c3mfbavb266bog4u0ssnq5jdpdrv0u1l.apps.googleusercontent.com&amp;redirect_uri=https%3A%2F%2Fitcareersadmin-oss.github.io%2FJob-Applications-2026%2F&amp;response_type=id_token&amp;scope=openid%20email%20profile&amp;nonce=itcareers2026&amp;prompt=select_account" class="submit" id="googleSignInLink" style="max-width:280px; margin:0 auto; display:block; text-align:center; text-decoration:none;">Sign in with Google</a>
     <div class="google-verify-status" id="googleVerifyStatus"></div>
     <div class="google-verify-status" id="locationStatus"></div>
   </div>
@@ -326,17 +326,565 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLgNe1LkYb6hu3Q9Bdo
 // ---- Google Sign-In verification (redirect-based, avoids popup/iframe issues on mobile) ----
 let googleVerifiedEmail = "";
 
+function parseJwt(token) {
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  return JSON.parse(jsonPayload);
+}
+
 function checkGoogleRedirectResult() {
-  if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+  if (window.location.hash && window.location.hash.indexOf('id_token=') !== -1) {
     const params = new URLSearchParams(window.location.hash.substring(1));
-    const token = params.get('access_token');
+    const idToken = params.get('id_token');
     const statusEl = document.getElementById('googleVerifyStatus');
-    if (token) {
-      statusEl.textContent = 'Verifying...';
-      statusEl.classList.add('pending');
-      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: 'Bearer ' + token }
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (info) {
-      
+    history.replaceState(null, '', window.location.pathname);
+    if (idToken) {
+      try {
+        const payload = parseJwt(idToken);
+        googleVerifiedEmail = payload.email || "";
+        statusEl.textContent = '✓ Verified as ' + googleVerifiedEmail;
+        statusEl.classList.remove('pending');
+        requestLocationAccess();
+      } catch (err) {
+        statusEl.textContent = 'Google verification failed. Please try again.';
+      }
+    }
+  }
+}
+
+let candidateLat = null;
+let candidateLng = null;
+
+function requestLocationAccess(){
+  const statusEl = document.getElementById('locationStatus');
+  statusEl.textContent = 'Requesting location access...';
+  statusEl.classList.add('pending');
+  if (!navigator.geolocation) {
+    statusEl.textContent = 'Location is not supported on this browser.';
+    statusEl.classList.remove('pending');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      candidateLat = pos.coords.latitude;
+      candidateLng = pos.coords.longitude;
+      statusEl.textContent = '✓ Location access granted';
+      statusEl.classList.remove('pending');
+      document.getElementById('mainCard').style.display = 'block';
+      document.getElementById('mainCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    function(err){
+      statusEl.innerHTML = 'Location access denied. <a href="javascript:void(0)" onclick="requestLocationAccess()" style="color:#2563eb;text-decoration:underline;">Tap here to allow and continue</a>';
+      statusEl.classList.remove('pending');
+    }
+  );
+}
+
+window.onload = function () {
+  checkGoogleRedirectResult();
+};
+
+
+// build 4 qualification blocks
+const qualBlocks = document.getElementById('qualBlocks');
+const qualLabels = ["Qualification 1","Qualification 2","Qualification 3","Qualification 4"];
+qualLabels.forEach((lbl, i) => {
+  const div = document.createElement('div');
+  div.className = 'qual-block';
+  div.innerHTML = `
+    <div class="qlabel">${lbl}</div>
+    <div class="row three">
+      <div>
+        <label>Level <span class="star">*</span></label>
+        <select class="qual-level" required>
+          <option value="">Select</option>
+          <option>10th</option><option>Inter</option><option>Degree</option><option>MBA</option><option>B.Tech</option>
+        </select>
+      </div>
+      <div><label>Institution / Board <span class="star">*</span></label><input type="text" class="qual-inst" required></div>
+      <div><label>Year <span class="star">*</span></label><input type="number" class="qual-year" min="1990" max="2030" required></div>
+      <div><label>%/CGPA <span class="star">*</span></label><input type="text" class="qual-perc" required></div>
+    </div>`;
+  qualBlocks.appendChild(div);
+});
+
+// show selected filenames
+const fileIds = ["tenthMemo","interMemo","degreeMemo","othersMemo","resume","aadhaarFront","aadhaarBack","photo"];
+let verifiedDocs = {};
+let aadhaarExtractedAddress = "";
+
+function fileToBase64Quick(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve({ name:file.name, mimeType:file.type, data: reader.result.split(',')[1] });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function verifyDocumentField(id, inputEl){
+  const statusEl = document.getElementById('docstatus-' + id);
+  const fnameEl = document.getElementById('fname-' + id);
+  const file = inputEl.files[0];
+  if (!file) return;
+
+  verifiedDocs[id] = false;
+  fnameEl.textContent = file.name;
+  fnameEl.style.display = 'block';
+  statusEl.className = 'doc-status pending';
+  statusEl.textContent = 'Verifying document...';
+
+  try {
+    const fileData = await fileToBase64Quick(file);
+    let docLabel = inputEl.getAttribute('data-doclabel') || 'document';
+    if (id === 'othersMemo') {
+      const otherSel = document.getElementById('othersType').value;
+      if (otherSel) docLabel = otherSel + ' qualification certificate';
+    }
+    const extractAddress = inputEl.getAttribute('data-extract-address') === 'true';
+
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verify_document', docLabel: docLabel, extractAddress: extractAddress, file: fileData })
+    });
+    const result = await resp.json();
+
+    if (result.result !== 'success') {
+      statusEl.className = 'doc-status error';
+      statusEl.textContent = '⚠ Could not verify — please try again.';
+      verifiedDocs[id] = false;
+      return;
+    }
+
+    if (result.valid) {
+      statusEl.className = 'doc-status success';
+      statusEl.textContent = result.skipped ? ('✓ Uploaded (' + result.reason + ')') : '✓ Successfully verified and uploaded';
+      verifiedDocs[id] = true;
+      if (extractAddress && result.extractedAddress) {
+        aadhaarExtractedAddress = result.extractedAddress;
+        checkAadhaarAddressMatch();
+      }
+    } else {
+      statusEl.className = 'doc-status error';
+      statusEl.textContent = '⚠ Please upload a valid document — ' + (result.reason || 'this does not look correct.');
+      verifiedDocs[id] = false;
+      inputEl.value = '';
+      fnameEl.style.display = 'none';
+    }
+  } catch (err) {
+    statusEl.className = 'doc-status error';
+    statusEl.textContent = '⚠ Verification failed — please try uploading again.';
+    verifiedDocs[id] = false;
+  }
+}
+
+fileIds.forEach(id=>{
+  const inputEl = document.getElementById(id);
+  verifiedDocs[id] = false;
+  inputEl.addEventListener('change', function(){
+    verifyDocumentField(id, inputEl);
+  });
+});
+
+// Generic "saved" indicator for required text/select/date/number/textarea fields
+function setupFieldChecks(){
+  const form = document.getElementById('appForm');
+  const fields = form.querySelectorAll('input[required], select[required], textarea[required]');
+  fields.forEach(field => {
+    if (field.type === 'file' || field.type === 'checkbox') return;
+    if (field.parentElement.querySelector('.field-check')) return; // avoid duplicates
+    const check = document.createElement('div');
+    check.className = 'field-check';
+    check.textContent = '✓ Saved';
+    field.insertAdjacentElement('afterend', check);
+    field.addEventListener('blur', function(){
+      if (field.checkValidity() && field.value.trim() !== '') {
+        check.classList.add('show');
+      } else {
+        check.classList.remove('show');
+      }
+    });
+  });
+}
+setupFieldChecks();
+
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    if(!file){ resolve(null); return; }
+    const reader = new FileReader();
+    reader.onload = () => resolve({ name:file.name, mimeType:file.type, data: reader.result.split(',')[1] });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ---- Mobile OTP ----
+let mobileOtpVerified = false;
+let mobileOtpVerifiedFor = "";
+
+document.getElementById('sendMobileOtpBtn').addEventListener('click', async function(){
+  const mobile = document.getElementById('mobile').value.trim();
+  const statusEl = document.getElementById('mobileOtpStatus');
+  if (!/^[0-9]{10}$/.test(mobile)) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Enter a valid 10-digit mobile number first.';
+    return;
+  }
+  this.disabled = true;
+  statusEl.className = 'otp-status';
+  statusEl.textContent = 'Sending OTP...';
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'send_mobile_otp', mobile: mobile })
+    });
+    const result = await resp.json();
+    if (result.result === 'success') {
+      statusEl.className = 'otp-status success';
+      statusEl.textContent = '✓ OTP sent to ' + mobile;
+      document.getElementById('mobileOtpInputRow').style.display = 'flex';
+    } else {
+      statusEl.className = 'otp-status error';
+      statusEl.textContent = result.message || 'Could not send OTP.';
+    }
+  } catch (err) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Network error — please try again.';
+  }
+  this.disabled = false;
+});
+
+document.getElementById('verifyMobileOtpBtn').addEventListener('click', async function(){
+  const mobile = document.getElementById('mobile').value.trim();
+  const code = document.getElementById('mobileOtpCode').value.trim();
+  const statusEl = document.getElementById('mobileOtpStatus');
+  if (!code) return;
+  this.disabled = true;
+  statusEl.textContent = 'Verifying...';
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verify_mobile_otp', mobile: mobile, code: code })
+    });
+    const result = await resp.json();
+    if (result.result === 'success' && result.verified) {
+      statusEl.className = 'otp-status success';
+      statusEl.textContent = '✓ Mobile number verified';
+      mobileOtpVerified = true;
+      mobileOtpVerifiedFor = mobile;
+      document.getElementById('mobileOtpInputRow').style.display = 'none';
+      document.getElementById('mobileOtpRow').style.display = 'none';
+      document.getElementById('mobile').setAttribute('readonly', 'readonly');
+    } else {
+      statusEl.className = 'otp-status error';
+      statusEl.textContent = result.message || 'Incorrect code, please try again.';
+    }
+  } catch (err) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Network error — please try again.';
+  }
+  this.disabled = false;
+});
+
+document.getElementById('mobile').addEventListener('input', function(){
+  if (mobileOtpVerified && this.value.trim() !== mobileOtpVerifiedFor) {
+    mobileOtpVerified = false;
+    document.getElementById('mobile').removeAttribute('readonly');
+    document.getElementById('mobileOtpRow').style.display = 'flex';
+    document.getElementById('mobileOtpStatus').textContent = '';
+  }
+});
+
+// ---- Email OTP ----
+let emailOtpVerified = false;
+let emailOtpVerifiedFor = "";
+
+document.getElementById('sendEmailOtpBtn').addEventListener('click', async function(){
+  const email = document.getElementById('email').value.trim();
+  const statusEl = document.getElementById('emailOtpStatus');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Enter a valid email address first.';
+    return;
+  }
+  this.disabled = true;
+  statusEl.className = 'otp-status';
+  statusEl.textContent = 'Sending OTP...';
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'send_email_otp', email: email })
+    });
+    const result = await resp.json();
+    if (result.result === 'success') {
+      statusEl.className = 'otp-status success';
+      statusEl.textContent = '✓ OTP sent to ' + email;
+      document.getElementById('emailOtpInputRow').style.display = 'flex';
+    } else {
+      statusEl.className = 'otp-status error';
+      statusEl.textContent = result.message || 'Could not send OTP.';
+    }
+  } catch (err) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Network error — please try again.';
+  }
+  this.disabled = false;
+});
+
+document.getElementById('verifyEmailOtpBtn').addEventListener('click', async function(){
+  const email = document.getElementById('email').value.trim();
+  const code = document.getElementById('emailOtpCode').value.trim();
+  const statusEl = document.getElementById('emailOtpStatus');
+  if (!code) return;
+  this.disabled = true;
+  statusEl.textContent = 'Verifying...';
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verify_email_otp', email: email, code: code })
+    });
+    const result = await resp.json();
+    if (result.result === 'success' && result.verified) {
+      statusEl.className = 'otp-status success';
+      statusEl.textContent = '✓ Email verified';
+      emailOtpVerified = true;
+      emailOtpVerifiedFor = email;
+      document.getElementById('emailOtpInputRow').style.display = 'none';
+      document.getElementById('emailOtpRow').style.display = 'none';
+      document.getElementById('email').setAttribute('readonly', 'readonly');
+    } else {
+      statusEl.className = 'otp-status error';
+      statusEl.textContent = result.message || 'Incorrect code, please try again.';
+    }
+  } catch (err) {
+    statusEl.className = 'otp-status error';
+    statusEl.textContent = 'Network error — please try again.';
+  }
+  this.disabled = false;
+});
+
+document.getElementById('email').addEventListener('input', function(){
+  if (emailOtpVerified && this.value.trim() !== emailOtpVerifiedFor) {
+    emailOtpVerified = false;
+    document.getElementById('email').removeAttribute('readonly');
+    document.getElementById('emailOtpRow').style.display = 'flex';
+    document.getElementById('emailOtpStatus').textContent = '';
+  }
+});
+
+// ---- Address matching (best-effort, informational, does not block submission) ----
+let addressMatchStatus = "Not checked";
+let aadhaarAddressMatchStatus = "Not checked";
+
+function normalizeAddressText(str){
+  return (str || "").toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function tokensOverlap(a, b){
+  const tokensA = new Set(normalizeAddressText(a).split(' ').filter(t => t.length > 2));
+  const tokensB = new Set(normalizeAddressText(b).split(' ').filter(t => t.length > 2));
+  if (tokensA.size === 0 || tokensB.size === 0) return 0;
+  let common = 0;
+  tokensA.forEach(t => { if (tokensB.has(t)) common++; });
+  return common / Math.min(tokensA.size, tokensB.size);
+}
+
+async function checkGpsAddressMatch(){
+  const statusEl = document.getElementById('currentLocStatus');
+  const addr = document.getElementById('currentLoc').value.trim();
+  if (!addr || candidateLat === null) return;
+  statusEl.className = 'addr-status';
+  statusEl.textContent = 'Checking against your location...';
+  try {
+    const resp = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + candidateLat + '&lon=' + candidateLng + '&zoom=16&addressdetails=1');
+    const geo = await resp.json();
+    const geoAddrText = geo.display_name || '';
+    const overlap = tokensOverlap(addr, geoAddrText);
+    if (overlap >= 0.25) {
+      statusEl.className = 'addr-status success';
+      statusEl.textContent = '✓ Address appears to match your location';
+      addressMatchStatus = 'Matched';
+    } else {
+      statusEl.className = 'addr-status warn';
+      statusEl.textContent = '⚠ Could not confirm this matches your GPS location — please double check';
+      addressMatchStatus = 'Could not confirm';
+    }
+  } catch (err) {
+    addressMatchStatus = 'Check failed';
+  }
+}
+
+function checkAadhaarAddressMatch(){
+  const statusEl = document.getElementById('permanentLocStatus');
+  const permAddr = document.getElementById('permanentLoc').value.trim();
+  if (!permAddr || !aadhaarExtractedAddress) return;
+  const overlap = tokensOverlap(permAddr, aadhaarExtractedAddress);
+  if (overlap >= 0.3) {
+    statusEl.className = 'addr-status success';
+    statusEl.textContent = '✓ Matches address on Aadhaar';
+    aadhaarAddressMatchStatus = 'Matched';
+  } else {
+    statusEl.className = 'addr-status warn';
+    statusEl.textContent = '⚠ Could not confirm this matches your Aadhaar address — please double check';
+    aadhaarAddressMatchStatus = 'Could not confirm';
+  }
+}
+
+document.getElementById('currentLoc').addEventListener('blur', checkGpsAddressMatch);
+document.getElementById('permanentLoc').addEventListener('blur', checkAadhaarAddressMatch);
+
+document.getElementById('altMobile').addEventListener('input', function(){
+  const mobileVal = document.getElementById('mobile').value.trim();
+  const altVal = this.value.trim();
+  const err = document.getElementById('altMobileError');
+  if (mobileVal && altVal && mobileVal === altVal) {
+    err.style.display = 'block';
+    this.classList.add('invalid');
+  } else {
+    err.style.display = 'none';
+    this.classList.remove('invalid');
+  }
+});
+
+function generateResponseId(){
+  const now = new Date();
+  const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
+  const rand = Math.floor(1000 + Math.random()*9000);
+  return `APP-${y}${m}${d}-${rand}`;
+}
+
+document.getElementById('appForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const submitBtn = document.getElementById('submitBtn');
+  const statusLine = document.getElementById('statusLine');
+
+  // Check: Google account must be verified before submitting
+  if (!googleVerifiedEmail) {
+    const box = document.getElementById('googleVerifyBox');
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('googleVerifyStatus').textContent = 'Please sign in with Google before submitting.';
+    document.getElementById('googleVerifyStatus').classList.remove('pending');
+    document.getElementById('googleVerifyStatus').style.color = '#B33A3A';
+    return;
+  }
+
+  // Check: Mobile Number and Alternative Mobile Number must not be the same
+  const mobileVal = document.getElementById('mobile').value.trim();
+  const altMobileVal = document.getElementById('altMobile').value.trim();
+  const altMobileError = document.getElementById('altMobileError');
+  const altMobileInput = document.getElementById('altMobile');
+
+  if (mobileVal && altMobileVal && mobileVal === altMobileVal) {
+    altMobileError.style.display = 'block';
+    altMobileInput.classList.add('invalid');
+    altMobileInput.focus();
+    altMobileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  } else {
+    altMobileError.style.display = 'none';
+    altMobileInput.classList.remove('invalid');
+  }
+
+  // Check: Mobile OTP must be verified
+  if (!mobileOtpVerified) {
+    statusLine.textContent = 'Please verify your Mobile Number with OTP before submitting.';
+    document.getElementById('mobile').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  // Check: Email OTP must be verified
+  if (!emailOtpVerified) {
+    statusLine.textContent = 'Please verify your Email Address with OTP before submitting.';
+    document.getElementById('email').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  // Check: all documents must be verified
+  const unverifiedDoc = fileIds.find(id => !verifiedDocs[id]);
+  if (unverifiedDoc) {
+    statusLine.textContent = 'Please upload and verify all required documents before submitting.';
+    document.getElementById(unverifiedDoc).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting...';
+  statusLine.textContent = 'Uploading files, please wait...';
+
+  const responseId = generateResponseId();
+
+  const quals = Array.from(document.querySelectorAll('.qual-block')).map(block=>({
+    level: block.querySelector('.qual-level').value,
+    institution: block.querySelector('.qual-inst').value,
+    year: block.querySelector('.qual-year').value,
+    percentage: block.querySelector('.qual-perc').value
+  }));
+
+  try{
+    const [tenthMemo, interMemo, degreeMemo, othersMemo, resume, aadhaarFront, aadhaarBack, photo] = await Promise.all(
+      fileIds.map(id => fileToBase64(document.getElementById(id).files[0]))
+    );
+
+    const payload = {
+      id: responseId,
+      submittedAt: new Date().toISOString(),
+      fullName: document.getElementById('fullName').value.trim(),
+      mobile: document.getElementById('mobile').value.trim(),
+      altMobile: document.getElementById('altMobile').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      googleEmail: googleVerifiedEmail,
+      gender: document.getElementById('gender').value,
+      dob: document.getElementById('dob').value,
+      qualifications: quals,
+      skills: document.getElementById('skills').value.trim(),
+      applyingFor: document.getElementById('applyingFor').value,
+      preferredRole: document.getElementById('preferredRole').value.trim(),
+      totalExp: document.getElementById('totalExp').value,
+      expSalary: document.getElementById('expSalary').value.trim(),
+      currentLoc: document.getElementById('currentLoc').value.trim(),
+      permanentLoc: document.getElementById('permanentLoc').value.trim(),
+      othersType: document.getElementById('othersType').value,
+      mobileOtpVerified: mobileOtpVerified,
+      emailOtpVerified: emailOtpVerified,
+      addressMatchStatus: addressMatchStatus,
+      aadhaarAddressMatchStatus: aadhaarAddressMatchStatus,
+      files: { tenthMemo, interMemo, degreeMemo, othersMemo, resume, aadhaarFront, aadhaarBack, photo }
+    };
+
+    if(SCRIPT_URL && SCRIPT_URL.indexOf('http') === 0){
+      await fetch(SCRIPT_URL, {
+        method:'POST',
+        headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    document.getElementById('responseId').textContent = responseId;
+    document.getElementById('stubName').textContent = payload.fullName;
+    document.getElementById('stubRole').textContent = payload.preferredRole + ' (' + payload.applyingFor + ')';
+    document.getElementById('stubTime').textContent = new Date().toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short' });
+
+    document.getElementById('formSection').classList.add('hidden');
+    document.getElementById('stub').classList.add('show');
+
+  }catch(err){
+    statusLine.textContent = 'Error: something went wrong while sending files, please try again.';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Application';
+  }
+});
+
+document.getElementById('copyHint').addEventListener('click', function(){
+  const id = document.getElementById('responseId').textContent;
+  navigator.clipboard.writeText(id).then(()=>{
+    this.textContent = '✓ Copied';
+    setTimeout(()=>{ this.textContent = '⧉ Copy Response ID'; }, 1500);
+  });
+});
+</script>
+</body>
+</html>
